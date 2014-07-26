@@ -60,13 +60,14 @@ public class Main extends SimpleApplication {
     
     private void test(){
         Mesh b = GraphicHelper.lineBox(new Vector3f(-1, -1, -1), new Vector3f(1, 1, 1));
-        Mesh box = GraphicHelper.lineBox(new Vector3f(-5, -5, -5), new Vector3f(5, 5, 5));
-        box.extractVertexData(b);
-        box.setMode(Mesh.Mode.Lines);
+        Mesh box = new Box(new Vector3f(-5, -5, -5), new Vector3f(5, 5, 5));
+        //box.extractVertexData(b);
+        //box.setMode(Mesh.Mode.Lines);
         Geometry geometry = new Geometry("box", box);
         Node node = new Node("node");
         Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         mat.setColor("Color", ColorRGBA.Blue);
+        mat.getAdditionalRenderState().setWireframe(true);
         geometry.setMaterial(mat);
         node.attachChild(geometry);
         rootNode.attachChild(node);

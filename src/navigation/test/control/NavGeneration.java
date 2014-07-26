@@ -1,6 +1,10 @@
 package navigation.test.control;
 
 import com.jme3.ai.agents.util.control.Game;
+import com.jme3.ai.navigation.detour.DetourBuilder;
+import com.jme3.ai.navigation.detour.NavMesh;
+import com.jme3.ai.navigation.detour.NavMeshCreateParams;
+import com.jme3.ai.navigation.detour.Status;
 import com.jme3.ai.navigation.recast.CompactHeightfield;
 import com.jme3.ai.navigation.recast.Config;
 import com.jme3.ai.navigation.recast.Context;
@@ -9,7 +13,6 @@ import com.jme3.ai.navigation.recast.Heightfield;
 import com.jme3.ai.navigation.recast.PolyMesh;
 import com.jme3.ai.navigation.recast.PolyMeshDetail;
 import com.jme3.ai.navigation.recast.RecastBuilder;
-import com.jme3.ai.navigation.utils.GraphicHelper;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
@@ -83,7 +86,6 @@ public class NavGeneration {
             return;
         }
 
-
         // Allocate array that can hold triangle area types. 
 
         // In Recast terminology, triangles are what indices in jME is. I left this,
@@ -106,8 +108,6 @@ public class NavGeneration {
         RecastBuilder.filterLowHangingWalkableObstacles(context, config.getWalkableClimb(), heightfield);
         RecastBuilder.filterLedgeSpans(context, config, heightfield);
         RecastBuilder.filterWalkableLowHeightSpans(context, config.getWalkableHeight(), heightfield);
-
-        showMeHeightfieldSolid(heightfield);
         
         
         // Step 4. Partition walkable surface to simple regions.
@@ -115,7 +115,7 @@ public class NavGeneration {
         // This will result more cache coherent data as well as the neighbours
         // between walkable cells will be calculated.
         CompactHeightfield compactHeightfield = new CompactHeightfield();
-
+        
         if (!RecastBuilder.buildCompactHeightfield(context, config, heightfield, compactHeightfield)) {
             System.out.println("Could not build compact data");
             return;
@@ -175,7 +175,7 @@ public class NavGeneration {
         // Build polygon navmesh from the contours.
         PolyMesh polyMesh = new PolyMesh();
 
-        if (!RecastBuilder.buildPolyMesh(context, contourSet, config.getMaxVerticesPerPoly(), polyMesh)) {
+        if (!RecastBuilder.buildPolyMesh(context, contourSet, config.getMaxVertsPerPoly(), polyMesh)) {
             System.out.println("Could not triangulate contours");
             return;
         }
@@ -189,14 +189,50 @@ public class NavGeneration {
         }
 
         // (Optional) Step 8. Create Detour data from Recast poly mesh.
-        //final step of Detour
-
+        // The GUI may allow more max points per polygon than Detour can handle.
+	// Only build the detour navmesh if we do not exceed the limit.
+        if (config.getMaxVertsPerPoly() > DetourBuilder.VERTS_PER_POLYGON()) {
+            return;
+        }
+        NavMeshCreateParams createParams = new NavMeshCreateParams();
+        createParams.getData(polyMesh);
+        createParams.getData(polyMeshDetail);
+        //setting optional off-mesh connections (in my example there are none)
+        createParams.getData(config);
+        createParams.setBuildBvTree(true);
+        
+        char[] navData = DetourBuilder.createNavMeshData(createParams);
+        
+        if (navData == null) {
+            System.out.println("Could not build Detour navmesh.");
+            return;
+        }
+        
+        NavMesh navMesh = new NavMesh();
+        
+        if (!navMesh.isAllocationSuccessful()) {
+            System.out.println("Could not create Detour navmesh");
+            return;
+        }
+        
+        Status status;
+        status = navMesh.init(navData, 45);
+        if (status.isFailed()) {
+            System.out.println("Could not init Detour navmesh");
+            return;
+        }
+    
+       // status = 
     }
+
+    
     
     private void showMeHeightfieldSolid(Heightfield heightfield){
         Material mat = material.clone();
         mat.setColor("Color", ColorRGBA.Yellow);
-        Geometry debbug = new Geometry("heightfield", heightfield.drawHeightfieldSolid());
+        mat.getAdditionalRenderState().setWireframe(true);
+        Geometry debbug = new Geometry(null);
+         //= new Geometry("heightfield", heightfield.drawHeightfieldSolid());
         debbug.setMaterial(mat);
         scene.attachChild(debbug);
     }
