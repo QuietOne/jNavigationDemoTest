@@ -4,6 +4,7 @@ import com.jme3.ai.agents.util.control.Game;
 import com.jme3.ai.navigation.detour.DetourBuilder;
 import com.jme3.ai.navigation.detour.NavMesh;
 import com.jme3.ai.navigation.detour.NavMeshCreateParams;
+import com.jme3.ai.navigation.detour.NavMeshQuery;
 import com.jme3.ai.navigation.detour.Status;
 import com.jme3.ai.navigation.recast.CompactHeightfield;
 import com.jme3.ai.navigation.recast.Config;
@@ -13,6 +14,7 @@ import com.jme3.ai.navigation.recast.Heightfield;
 import com.jme3.ai.navigation.recast.PolyMesh;
 import com.jme3.ai.navigation.recast.PolyMeshDetail;
 import com.jme3.ai.navigation.recast.RecastBuilder;
+import com.jme3.ai.navigation.tilecache.TileFlags;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
@@ -216,13 +218,14 @@ public class NavGeneration {
         }
         
         Status status;
-        status = navMesh.init(navData, 45);
+        status = navMesh.init(navData, TileFlags.DT_TILE_FREE_DATA.swigValue());
         if (status.isFailed()) {
             System.out.println("Could not init Detour navmesh");
             return;
         }
-    
-       // status = 
+        NavMeshQuery query = new NavMeshQuery();
+        status = query.init(navMesh, 2048);
+        
     }
 
     
