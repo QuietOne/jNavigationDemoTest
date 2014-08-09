@@ -218,13 +218,16 @@ public class NavGeneration {
         }
         
         Status status;
-        status = navMesh.init(navData, TileFlags.DT_TILE_FREE_DATA.swigValue());
+        status = navMesh.init(navData, TileFlags.DT_TILE_FREE_DATA.value());
         if (status.isFailed()) {
             System.out.println("Could not init Detour navmesh");
             return;
         }
         NavMeshQuery query = new NavMeshQuery();
         status = query.init(navMesh, 2048);
+        if (status.isFailed()) {
+            System.out.println("Could not init Detour navmesh query");
+        }
         
     }
 
